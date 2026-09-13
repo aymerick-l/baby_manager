@@ -15,3 +15,17 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+
+//TODO: ajouter des graphs
+⏱️ Durée moyenne / biberon
+🕐 Intervalle moyen entre biberons
+Priorité moyenne
+6. 📈 Volume par jour
+7. 📈 Nombre de biberons par jour
+
+//TODO: Connecter sur bdd distante
+//TODO: revoir logo/style
+//TODO: Ajouter la même chose pour les couches
+//TODO: Ajouter la gestion multi enfant
+//TODO: Ajouter le nombre de couches -> utile pour la santé du nourisson 
