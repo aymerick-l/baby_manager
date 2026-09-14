@@ -37,21 +37,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   void _initializeDateRange() {
     final now = DateTime.now();
 
-    _startDate = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    _startDate = DateTime(now.year, now.month, now.day);
 
-    _endDate = _startDate.add(
-      const Duration(days: 1),
-    );
+    _endDate = _startDate.add(const Duration(days: 1));
   }
 
   void _loadBottles() {
-    _bottlesFuture = widget.bottleRepository.getByChildId(
-      widget.childId,
-    );
+    _bottlesFuture = widget.bottleRepository.getByChildId(widget.childId);
   }
 
   Future<void> _refresh() async {
@@ -69,11 +61,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     }).toList();
 
     // Sécurité : on s'assure que le plus récent est en premier.
-    filtered.sort(
-      (a, b) => b.feedingStartedAt.compareTo(
-        a.feedingStartedAt,
-      ),
-    );
+    filtered.sort((a, b) => b.feedingStartedAt.compareTo(a.feedingStartedAt));
 
     return filtered;
   }
@@ -84,9 +72,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       future: _bottlesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
@@ -134,9 +120,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
         const SizedBox(height: 16),
 
-        LastBottleCard(
-          bottle: lastBottle,
-        ),
+        LastBottleCard(bottle: lastBottle),
 
         const SizedBox(height: 24),
 
@@ -156,19 +140,16 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
   Widget _buildSummarySection(List<Bottle> bottles) {
     final bottleCount = bottles.length;
     final totalVolume = _calculateTotalVolume(bottles);
-    final totalFeedingDuration =
-        _calculateTotalFeedingDuration(bottles);
-    final totalBurpingDuration =
-        _calculateTotalBurpingDuration(bottles);
+    final totalFeedingDuration = _calculateTotalFeedingDuration(bottles);
+    final totalBurpingDuration = _calculateTotalBurpingDuration(bottles);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Résumé',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 12),
@@ -200,9 +181,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     child: _StatCard(
                       icon: Icons.timer_outlined,
                       title: 'Prise',
-                      value: _formatDuration(
-                        totalFeedingDuration,
-                      ),
+                      value: _formatDuration(totalFeedingDuration),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -210,9 +189,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     child: _StatCard(
                       icon: Icons.air_outlined,
                       title: 'Rot',
-                      value: _formatDuration(
-                        totalBurpingDuration,
-                      ),
+                      value: _formatDuration(totalBurpingDuration),
                     ),
                   ),
                 ],
@@ -247,9 +224,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       child: _StatCard(
                         icon: Icons.timer_outlined,
                         title: 'Prise',
-                        value: _formatDuration(
-                          totalFeedingDuration,
-                        ),
+                        value: _formatDuration(totalFeedingDuration),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -257,9 +232,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       child: _StatCard(
                         icon: Icons.air_outlined,
                         title: 'Rot',
-                        value: _formatDuration(
-                          totalBurpingDuration,
-                        ),
+                        value: _formatDuration(totalBurpingDuration),
                       ),
                     ),
                   ],
@@ -278,9 +251,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       children: [
         Text(
           'Timeline',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.bold),
         ),
 
         const SizedBox(height: 4),
@@ -298,9 +270,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             height: 400,
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: BottleTimelineChart(
-                bottles: bottles,
-              ),
+              child: BottleTimelineChart(bottles: bottles),
             ),
           ),
         ),
@@ -313,30 +283,21 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       width: double.infinity,
       child: Card(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 48,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
           child: Column(
             children: [
               Icon(
                 Icons.bar_chart_outlined,
                 size: 56,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurfaceVariant,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
 
               const SizedBox(height: 16),
 
               Text(
                 'Aucun biberon',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
 
               const SizedBox(height: 8),
@@ -360,10 +321,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 48,
-            ),
+            const Icon(Icons.error_outline, size: 48),
 
             const SizedBox(height: 16),
 
@@ -412,9 +370,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return total;
   }
 
-  Duration _calculateTotalFeedingDuration(
-    List<Bottle> bottles,
-  ) {
+  Duration _calculateTotalFeedingDuration(List<Bottle> bottles) {
     var total = Duration.zero;
 
     for (final bottle in bottles) {
@@ -428,9 +384,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
     return total;
   }
 
-  Duration _calculateTotalBurpingDuration(
-    List<Bottle> bottles,
-  ) {
+  Duration _calculateTotalBurpingDuration(List<Bottle> bottles) {
     var total = Duration.zero;
 
     for (final bottle in bottles) {
@@ -504,10 +458,7 @@ class _StatCard extends StatelessWidget {
                 color: theme.colorScheme.primaryContainer,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
+              child: Icon(icon, color: theme.colorScheme.onPrimaryContainer),
             ),
 
             const SizedBox(width: 12),
@@ -516,10 +467,7 @@ class _StatCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  Text(title, style: theme.textTheme.bodySmall),
 
                   const SizedBox(height: 4),
 

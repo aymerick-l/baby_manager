@@ -5,40 +5,31 @@ import '../models/bottle.dart';
 class BottleTimelineChart extends StatelessWidget {
   final List<Bottle> bottles;
 
-  const BottleTimelineChart({
-    super.key,
-    required this.bottles,
-  });
+  const BottleTimelineChart({super.key, required this.bottles});
 
   @override
   Widget build(BuildContext context) {
     if (bottles.isEmpty) {
-      return const Center(
-        child: Text('Aucune donnée disponible'),
-      );
+      return const Center(child: Text('Aucune donnée disponible'));
     }
 
     final sortedBottles = [...bottles]
-      ..sort(
-        (a, b) => a.feedingStartedAt.compareTo(
-          b.feedingStartedAt,
-        ),
-      );
+      ..sort((a, b) => a.feedingStartedAt.compareTo(b.feedingStartedAt));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _ChartLegend(),
         const SizedBox(height: 12),
-        Expanded(
-          child: _BottleTimelineChartView(
-            bottles: sortedBottles,
-          ),
-        ),
+        Expanded(child: _BottleTimelineChartView(bottles: sortedBottles)),
       ],
     );
   }
 }
+
+// =============================================================================
+// LEGEND
+// =============================================================================
 
 class _ChartLegend extends StatelessWidget {
   @override
@@ -47,15 +38,9 @@ class _ChartLegend extends StatelessWidget {
 
     return Row(
       children: [
-        _LegendItem(
-          color: theme.colorScheme.primary,
-          label: 'Temps de prise',
-        ),
+        _LegendItem(color: theme.colorScheme.primary, label: 'Temps de prise'),
         const SizedBox(width: 20),
-        const _LegendItem(
-          color: Colors.red,
-          label: 'Temps de rot',
-        ),
+        const _LegendItem(color: Colors.red, label: 'Temps de rot'),
       ],
     );
   }
@@ -65,10 +50,7 @@ class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
 
-  const _LegendItem({
-    required this.color,
-    required this.label,
-  });
+  const _LegendItem({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -84,29 +66,27 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
 }
 
+// =============================================================================
+// CHART VIEW
+// =============================================================================
+
 class _BottleTimelineChartView extends StatefulWidget {
   final List<Bottle> bottles;
 
-  const _BottleTimelineChartView({
-    required this.bottles,
-  });
+  const _BottleTimelineChartView({required this.bottles});
 
   @override
   State<_BottleTimelineChartView> createState() =>
       _BottleTimelineChartViewState();
 }
 
-class _BottleTimelineChartViewState
-    extends State<_BottleTimelineChartView> {
+class _BottleTimelineChartViewState extends State<_BottleTimelineChartView> {
   int? _selectedIndex;
 
   static const double _leftPadding = 58;
@@ -119,20 +99,27 @@ class _BottleTimelineChartViewState
 
   static const double _minimumChartWidth = 1100;
 
-  static const int _startHour = 6;
+  // ===========================================================================
+  // JOURNÉE COMPLÈTE : 00:00 -> 00:00
+  // ===========================================================================
+  //
+  // 0 = 00:00
+  // 24 = 00:00 du jour suivant
+  //
+  // L'utilisation de 24 permet de conserver une échelle de 24 heures
+  // tout en affichant le dernier repère comme "00:00".
+  //
+  static const int _startHour = 0;
   static const int _endHour = 24;
 
   @override
   Widget build(BuildContext context) {
     final height =
-        _topPadding +
-        widget.bottles.length * _rowHeight +
-        _bottomPadding;
+        _topPadding + widget.bottles.length * _rowHeight + _bottomPadding;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final chartWidth = constraints.maxWidth <
-                _minimumChartWidth
+        final chartWidth = constraints.maxWidth < _minimumChartWidth
             ? _minimumChartWidth
             : constraints.maxWidth;
 
@@ -143,16 +130,10 @@ class _BottleTimelineChartViewState
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTapUp: (details) {
-                _handleTap(
-                  details.localPosition,
-                  chartWidth,
-                );
+                _handleTap(details.localPosition, chartWidth);
               },
               child: CustomPaint(
-                size: Size(
-                  chartWidth,
-                  height,
-                ),
+                size: Size(chartWidth, height),
                 painter: _BottleTimelinePainter(
                   bottles: widget.bottles,
                   selectedIndex: _selectedIndex,
@@ -174,10 +155,11 @@ class _BottleTimelineChartViewState
     );
   }
 
-  void _handleTap(
-    Offset position,
-    double width,
-  ) {
+  // ===========================================================================
+  // TAP
+  // ===========================================================================
+
+  void _handleTap(Offset position, double width) {
     final y = position.dy - _topPadding;
 
     if (y < 0) {
@@ -198,38 +180,24 @@ class _BottleTimelineChartViewState
 
     final bottle = widget.bottles[index];
 
-    final chartWidth =
-        width - _leftPadding - _rightPadding;
+    final chartWidth = width - _leftPadding - _rightPadding;
 
-    final totalMinutes =
-        (_endHour - _startHour) * 60;
+    final totalMinutes = (_endHour - _startHour) * 60;
 
-    final startMinutes =
-        _minutesSinceMidnight(
-      bottle.feedingStartedAt,
-    );
+    final startMinutes = _minutesSinceMidnight(bottle.feedingStartedAt);
 
     final x =
         _leftPadding +
-        ((startMinutes - _startHour * 60) /
-                totalMinutes) *
-            chartWidth;
+        ((startMinutes - _startHour * 60) / totalMinutes) * chartWidth;
 
-    final feedingDuration =
-        bottle.feedingDuration?.inSeconds ?? 0;
+    final feedingDuration = bottle.feedingDuration?.inSeconds ?? 0;
 
-    final feedingWidth =
-        (feedingDuration / 60) /
-            totalMinutes *
-            chartWidth;
+    final feedingWidth = (feedingDuration / 60) / totalMinutes * chartWidth;
 
-    final safeFeedingWidth =
-        feedingWidth.clamp(4.0, chartWidth);
+    final safeFeedingWidth = feedingWidth.clamp(4.0, chartWidth);
 
     final isInsideX =
-        position.dx >= x - 10 &&
-        position.dx <=
-            x + safeFeedingWidth + 10;
+        position.dx >= x - 10 && position.dx <= x + safeFeedingWidth + 10;
 
     if (!isInsideX) {
       setState(() {
@@ -239,12 +207,15 @@ class _BottleTimelineChartViewState
     }
 
     setState(() {
-      _selectedIndex =
-          _selectedIndex == index ? null : index;
+      _selectedIndex = _selectedIndex == index ? null : index;
     });
 
     _showBottleDetails(bottle);
   }
+
+  // ===========================================================================
+  // DETAILS
+  // ===========================================================================
 
   void _showBottleDetails(Bottle bottle) {
     showModalBottomSheet(
@@ -253,47 +224,31 @@ class _BottleTimelineChartViewState
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              24,
-              8,
-              24,
-              24,
-            ),
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Biberon',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.headlineSmall
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
                 _DetailRow(
                   icon: Icons.schedule,
                   label: 'Heure',
-                  value: _formatTime(
-                    bottle.feedingStartedAt,
-                  ),
+                  value: _formatTime(bottle.feedingStartedAt),
                 ),
                 _DetailRow(
                   icon: Icons.timer_outlined,
                   label: 'Temps de prise',
-                  value: _formatDuration(
-                    bottle.feedingDuration,
-                  ),
+                  value: _formatDuration(bottle.feedingDuration),
                 ),
                 _DetailRow(
                   icon: Icons.air,
                   label: 'Temps de rot',
-                  value: _formatDuration(
-                    bottle.burpingDuration,
-                  ),
+                  value: _formatDuration(bottle.burpingDuration),
                 ),
                 _DetailRow(
                   icon: Icons.water_drop_outlined,
@@ -304,12 +259,9 @@ class _BottleTimelineChartViewState
                   _DetailRow(
                     icon: Icons.local_drink_outlined,
                     label: 'Type',
-                    value: _formatType(
-                      bottle.type!,
-                    ),
+                    value: _formatType(bottle.type!),
                   ),
-                if (bottle.notes != null &&
-                    bottle.notes!.isNotEmpty)
+                if (bottle.notes != null && bottle.notes!.isNotEmpty)
                   _DetailRow(
                     icon: Icons.notes,
                     label: 'Notes',
@@ -324,35 +276,29 @@ class _BottleTimelineChartViewState
     );
   }
 
-  int _minutesSinceMidnight(
-    DateTime dateTime,
-  ) {
-    return dateTime.hour * 60 +
-        dateTime.minute;
+  // ===========================================================================
+  // HELPERS
+  // ===========================================================================
+
+  int _minutesSinceMidnight(DateTime dateTime) {
+    return dateTime.hour * 60 + dateTime.minute;
   }
 
-  String _formatTime(
-    DateTime dateTime,
-  ) {
-    final hour =
-        dateTime.hour.toString().padLeft(2, '0');
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
 
-    final minute =
-        dateTime.minute.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
 
     return '$hour:$minute';
   }
 
-  String _formatDuration(
-    Duration? duration,
-  ) {
+  String _formatDuration(Duration? duration) {
     if (duration == null) {
       return '--';
     }
 
     final minutes = duration.inMinutes;
-    final seconds =
-        duration.inSeconds % 60;
+    final seconds = duration.inSeconds % 60;
 
     if (minutes == 0) {
       return '${seconds}s';
@@ -365,19 +311,16 @@ class _BottleTimelineChartViewState
     return '${minutes}min ${seconds}s';
   }
 
-  String _formatVolume(
-    Bottle bottle,
-  ) {
+  String _formatVolume(Bottle bottle) {
     if (bottle.volume == null) {
       return '--';
     }
 
     final volume = bottle.volume!;
 
-    final formatted =
-        volume % 1 == 0
-            ? volume.toInt().toString()
-            : volume.toStringAsFixed(1);
+    final formatted = volume % 1 == 0
+        ? volume.toInt().toString()
+        : volume.toStringAsFixed(1);
 
     final unit = switch (bottle.volumeUnit) {
       VolumeUnit.ml => 'ml',
@@ -388,9 +331,7 @@ class _BottleTimelineChartViewState
     return '$formatted $unit';
   }
 
-  String _formatType(
-    BottleType type,
-  ) {
+  String _formatType(BottleType type) {
     return switch (type) {
       BottleType.breastMilk => 'Lait maternel',
       BottleType.formula => 'Lait artificiel',
@@ -399,8 +340,11 @@ class _BottleTimelineChartViewState
   }
 }
 
-class _BottleTimelinePainter
-    extends CustomPainter {
+// =============================================================================
+// PAINTER
+// =============================================================================
+
+class _BottleTimelinePainter extends CustomPainter {
   final List<Bottle> bottles;
   final int? selectedIndex;
 
@@ -432,194 +376,112 @@ class _BottleTimelinePainter
   });
 
   @override
-  void paint(
-    Canvas canvas,
-    Size size,
-  ) {
-    final chartWidth =
-        size.width -
-        leftPadding -
-        rightPadding;
+  void paint(Canvas canvas, Size size) {
+    final chartWidth = size.width - leftPadding - rightPadding;
 
-    final chartHeight =
-        size.height -
-        topPadding -
-        bottomPadding;
+    final chartHeight = size.height - topPadding - bottomPadding;
 
-    _drawBackground(
-      canvas,
-      size,
-    );
+    _drawBackground(canvas, size);
 
-    _drawTimeGrid(
-      canvas,
-      chartWidth,
-      chartHeight,
-    );
+    _drawTimeGrid(canvas, chartWidth, chartHeight);
 
-    _drawBottles(
-      canvas,
-      chartWidth,
-    );
+    _drawBottles(canvas, chartWidth);
 
-    _drawTimeLabels(
-      canvas,
-      size,
-      chartWidth,
-    );
+    _drawTimeLabels(canvas, size, chartWidth);
   }
 
-  void _drawBackground(
-    Canvas canvas,
-    Size size,
-  ) {
-    final paint = Paint()
-      ..color = theme.colorScheme.surface;
+  // ===========================================================================
+  // BACKGROUND
+  // ===========================================================================
 
-    canvas.drawRect(
-      Offset.zero & size,
-      paint,
-    );
+  void _drawBackground(Canvas canvas, Size size) {
+    final paint = Paint()..color = theme.colorScheme.surface;
+
+    canvas.drawRect(Offset.zero & size, paint);
   }
 
-  void _drawTimeGrid(
-    Canvas canvas,
-    double chartWidth,
-    double chartHeight,
-  ) {
+  // ===========================================================================
+  // GRID
+  // ===========================================================================
+
+  void _drawTimeGrid(Canvas canvas, double chartWidth, double chartHeight) {
     final verticalPaint = Paint()
-      ..color =
-          theme.colorScheme.outlineVariant
+      ..color = theme.colorScheme.outlineVariant
       ..strokeWidth = 1;
 
     final horizontalPaint = Paint()
-      ..color =
-          theme.colorScheme.outlineVariant
+      ..color = theme.colorScheme.outlineVariant
       ..strokeWidth = 0.5;
 
-    final totalMinutes =
-        (endHour - startHour) * 60;
+    final totalMinutes = (endHour - startHour) * 60;
 
-    for (int hour = startHour;
-        hour <= endHour;
-        hour++) {
-      final minutesFromStart =
-          (hour - startHour) * 60;
+    // Une ligne par heure, de 00:00 à 24:00.
+    for (int hour = startHour; hour <= endHour; hour++) {
+      final minutesFromStart = (hour - startHour) * 60;
 
-      final x =
-          leftPadding +
-          (minutesFromStart /
-                  totalMinutes) *
-              chartWidth;
+      final x = leftPadding + (minutesFromStart / totalMinutes) * chartWidth;
 
       canvas.drawLine(
         Offset(x, topPadding),
-        Offset(
-          x,
-          topPadding + chartHeight,
-        ),
+        Offset(x, topPadding + chartHeight),
         verticalPaint,
       );
     }
 
-    for (int i = 0;
-        i <= bottles.length;
-        i++) {
-      final y =
-          topPadding + i * rowHeight;
+    // Lignes horizontales.
+    for (int i = 0; i <= bottles.length; i++) {
+      final y = topPadding + i * rowHeight;
 
       canvas.drawLine(
         Offset(leftPadding, y),
-        Offset(
-          leftPadding + chartWidth,
-          y,
-        ),
+        Offset(leftPadding + chartWidth, y),
         horizontalPaint,
       );
     }
   }
 
-  void _drawBottles(
-    Canvas canvas,
-    double chartWidth,
-  ) {
-    final totalMinutes =
-        (endHour - startHour) * 60;
+  // ===========================================================================
+  // BOTTLES
+  // ===========================================================================
 
-    for (int index = 0;
-        index < bottles.length;
-        index++) {
+  void _drawBottles(Canvas canvas, double chartWidth) {
+    final totalMinutes = (endHour - startHour) * 60;
+
+    for (int index = 0; index < bottles.length; index++) {
       final bottle = bottles[index];
 
       final startMinutes =
-          bottle.feedingStartedAt.hour * 60 +
-          bottle.feedingStartedAt.minute;
+          bottle.feedingStartedAt.hour * 60 + bottle.feedingStartedAt.minute;
 
-      final rowTop =
-          topPadding +
-          index * rowHeight;
+      final rowTop = topPadding + index * rowHeight;
 
-      final centerY =
-          rowTop + rowHeight / 2;
+      final centerY = rowTop + rowHeight / 2;
 
       final x =
           leftPadding +
-          ((startMinutes -
-                      startHour * 60) /
-                  totalMinutes) *
-              chartWidth;
+          ((startMinutes - startHour * 60) / totalMinutes) * chartWidth;
 
-      final feedingDuration =
-          bottle.feedingDuration?.inSeconds ??
-              0;
+      final feedingDuration = bottle.feedingDuration?.inSeconds ?? 0;
 
-      final feedingWidth =
-          (feedingDuration / 60) /
-              totalMinutes *
-              chartWidth;
+      final feedingWidth = (feedingDuration / 60) / totalMinutes * chartWidth;
 
-      final safeFeedingWidth =
-          feedingWidth.clamp(
-        4.0,
-        chartWidth,
-      );
+      final safeFeedingWidth = feedingWidth.clamp(4.0, chartWidth);
 
-      final isSelected =
-          selectedIndex == index;
+      final isSelected = selectedIndex == index;
 
-      _drawFeedingBar(
-        canvas,
-        x,
-        centerY,
-        safeFeedingWidth,
-        isSelected,
-      );
+      _drawFeedingBar(canvas, x, centerY, safeFeedingWidth, isSelected);
 
-      _drawBurpingBar(
-        canvas,
-        bottle,
-        x,
-        centerY,
-        safeFeedingWidth,
-        chartWidth,
-      );
+      _drawBurpingBar(canvas, bottle, x, centerY, safeFeedingWidth, chartWidth);
 
-      _drawVolume(
-        canvas,
-        bottle,
-        x,
-        centerY,
-        safeFeedingWidth,
-        chartWidth,
-      );
+      _drawVolume(canvas, bottle, x, centerY, safeFeedingWidth, chartWidth);
 
-      _drawStartTime(
-        canvas,
-        bottle,
-        rowTop,
-      );
+      _drawStartTime(canvas, bottle, rowTop);
     }
   }
+
+  // ===========================================================================
+  // FEEDING BAR
+  // ===========================================================================
 
   void _drawFeedingBar(
     Canvas canvas,
@@ -629,32 +491,23 @@ class _BottleTimelinePainter
     bool selected,
   ) {
     // 🔵 Temps de prise
-    final paint = Paint()
-      ..color = theme.colorScheme.primary;
+    final paint = Paint()..color = theme.colorScheme.primary;
 
     if (selected) {
-      paint.color =
-          theme.colorScheme.primary.withValues(
-        alpha: 0.65,
-      );
+      paint.color = theme.colorScheme.primary.withValues(alpha: 0.65);
     }
 
-    final rect =
-        RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        x,
-        centerY - barHeight / 2,
-        width,
-        barHeight,
-      ),
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(x, centerY - barHeight / 2, width, barHeight),
       const Radius.circular(6),
     );
 
-    canvas.drawRRect(
-      rect,
-      paint,
-    );
+    canvas.drawRRect(rect, paint);
   }
+
+  // ===========================================================================
+  // BURPING BAR
+  // ===========================================================================
 
   void _drawBurpingBar(
     Canvas canvas,
@@ -664,34 +517,22 @@ class _BottleTimelinePainter
     double feedingWidth,
     double chartWidth,
   ) {
-    final duration =
-        bottle.burpingDuration;
+    final duration = bottle.burpingDuration;
 
-    if (duration == null ||
-        duration.inSeconds <= 0) {
+    if (duration == null || duration.inSeconds <= 0) {
       return;
     }
 
-    final totalMinutes =
-        (endHour - startHour) * 60;
+    final totalMinutes = (endHour - startHour) * 60;
 
-    final burpingWidth =
-        (duration.inSeconds / 60) /
-            totalMinutes *
-            chartWidth;
+    final burpingWidth = (duration.inSeconds / 60) / totalMinutes * chartWidth;
 
-    final safeWidth =
-        burpingWidth.clamp(
-      4.0,
-      chartWidth,
-    );
+    final safeWidth = burpingWidth.clamp(4.0, chartWidth);
 
     // 🔴 Temps de rot
-    final paint = Paint()
-      ..color = Colors.red;
+    final paint = Paint()..color = Colors.red;
 
-    final rect =
-        RRect.fromRectAndRadius(
+    final rect = RRect.fromRectAndRadius(
       Rect.fromLTWH(
         x + feedingWidth,
         centerY - barHeight / 2,
@@ -701,11 +542,12 @@ class _BottleTimelinePainter
       const Radius.circular(6),
     );
 
-    canvas.drawRRect(
-      rect,
-      paint,
-    );
+    canvas.drawRRect(rect, paint);
   }
+
+  // ===========================================================================
+  // VOLUME
+  // ===========================================================================
 
   void _drawVolume(
     Canvas canvas,
@@ -721,10 +563,9 @@ class _BottleTimelinePainter
 
     final volume = bottle.volume!;
 
-    final formatted =
-        volume % 1 == 0
-            ? volume.toInt().toString()
-            : volume.toStringAsFixed(1);
+    final formatted = volume % 1 == 0
+        ? volume.toInt().toString()
+        : volume.toStringAsFixed(1);
 
     final unit = switch (bottle.volumeUnit) {
       VolumeUnit.ml => 'ml',
@@ -737,8 +578,7 @@ class _BottleTimelinePainter
     final textPainter = TextPainter(
       text: TextSpan(
         text: text,
-        style: theme.textTheme.labelSmall
-            ?.copyWith(
+        style: theme.textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.bold,
           color: theme.colorScheme.onSurface,
         ),
@@ -748,38 +588,26 @@ class _BottleTimelinePainter
 
     textPainter.layout();
 
-    var textX =
-        x + feedingWidth + 8;
+    var textX = x + feedingWidth + 8;
 
-    final chartEnd =
-        leftPadding + chartWidth;
+    final chartEnd = leftPadding + chartWidth;
 
-    if (textX + textPainter.width >
-        chartEnd) {
-      textX =
-          x - textPainter.width - 8;
+    if (textX + textPainter.width > chartEnd) {
+      textX = x - textPainter.width - 8;
     }
 
     if (textX < leftPadding) {
-      textX =
-          x + feedingWidth + 8;
+      textX = x + feedingWidth + 8;
     }
 
-    textPainter.paint(
-      canvas,
-      Offset(
-        textX,
-        centerY -
-            textPainter.height / 2,
-      ),
-    );
+    textPainter.paint(canvas, Offset(textX, centerY - textPainter.height / 2));
   }
 
-  void _drawStartTime(
-    Canvas canvas,
-    Bottle bottle,
-    double rowTop,
-  ) {
+  // ===========================================================================
+  // START TIME
+  // ===========================================================================
+
+  void _drawStartTime(Canvas canvas, Bottle bottle, double rowTop) {
     final time =
         '${bottle.feedingStartedAt.hour.toString().padLeft(2, '0')}:'
         '${bottle.feedingStartedAt.minute.toString().padLeft(2, '0')}';
@@ -787,11 +615,9 @@ class _BottleTimelinePainter
     final textPainter = TextPainter(
       text: TextSpan(
         text: time,
-        style: theme.textTheme.labelSmall
-            ?.copyWith(
+        style: theme.textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.bold,
-          color:
-              theme.colorScheme.onSurfaceVariant,
+          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -801,43 +627,34 @@ class _BottleTimelinePainter
 
     textPainter.paint(
       canvas,
-      Offset(
-        0,
-        rowTop +
-            rowHeight / 2 -
-            textPainter.height / 2,
-      ),
+      Offset(0, rowTop + rowHeight / 2 - textPainter.height / 2),
     );
   }
 
-  void _drawTimeLabels(
-    Canvas canvas,
-    Size size,
-    double chartWidth,
-  ) {
-    final totalMinutes =
-        (endHour - startHour) * 60;
+  // ===========================================================================
+  // TIME LABELS
+  // ===========================================================================
 
-    for (int hour = startHour;
-        hour <= endHour;
-        hour++) {
-      final minutesFromStart =
-          (hour - startHour) * 60;
+  void _drawTimeLabels(Canvas canvas, Size size, double chartWidth) {
+    final totalMinutes = (endHour - startHour) * 60;
 
-      final x =
-          leftPadding +
-          (minutesFromStart /
-                  totalMinutes) *
-              chartWidth;
+    for (int hour = startHour; hour <= endHour; hour++) {
+      final minutesFromStart = (hour - startHour) * 60;
+
+      final x = leftPadding + (minutesFromStart / totalMinutes) * chartWidth;
+
+      // Important :
+      // 24:00 est affiché comme 00:00 puisque
+      // la timeline représente une journée complète.
+      final labelHour = hour == 24 ? 0 : hour;
+
+      final label = '${labelHour.toString().padLeft(2, '0')}:00';
 
       final textPainter = TextPainter(
         text: TextSpan(
-          text: '$hour:00',
-          style: theme.textTheme.labelSmall
-              ?.copyWith(
-            color: theme
-                .colorScheme
-                .onSurfaceVariant,
+          text: label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -846,41 +663,35 @@ class _BottleTimelinePainter
 
       textPainter.layout();
 
-      var textX =
-          x - textPainter.width / 2;
+      var textX = x - textPainter.width / 2;
 
       if (hour == startHour) {
         textX = x;
       }
 
       if (hour == endHour) {
-        textX =
-            x - textPainter.width;
+        textX = x - textPainter.width;
       }
 
-      textPainter.paint(
-        canvas,
-        Offset(
-          textX,
-          size.height -
-              bottomPadding +
-              8,
-        ),
-      );
+      textPainter.paint(canvas, Offset(textX, size.height - bottomPadding + 8));
     }
   }
 
+  // ===========================================================================
+  // REPAINT
+  // ===========================================================================
+
   @override
-  bool shouldRepaint(
-    covariant _BottleTimelinePainter
-        oldDelegate,
-  ) {
+  bool shouldRepaint(covariant _BottleTimelinePainter oldDelegate) {
     return oldDelegate.bottles != bottles ||
-        oldDelegate.selectedIndex !=
-            selectedIndex ||
+        oldDelegate.selectedIndex != selectedIndex ||
         oldDelegate.theme != theme;
   }
 }
+
+// =============================================================================
+// DETAIL ROW
+// =============================================================================
 
 class _DetailRow extends StatelessWidget {
   final IconData icon;
@@ -898,33 +709,24 @@ class _DetailRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 8,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 22,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(icon, size: 22, color: theme.colorScheme.primary),
           const SizedBox(width: 12),
           SizedBox(
             width: 120,
             child: Text(
               label,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(
-                color: theme.colorScheme
-                    .onSurfaceVariant,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: theme.textTheme.bodyLarge
-                  ?.copyWith(
+              style: theme.textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -934,4 +736,3 @@ class _DetailRow extends StatelessWidget {
     );
   }
 }
-

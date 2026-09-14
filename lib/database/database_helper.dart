@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static const String _databaseName = 'baby_manager.db';
-  static const int _databaseVersion = 1;
+  static const int _databaseVersion = 2;
 
   static Database? _database;
 
@@ -32,10 +32,33 @@ class DatabaseHelper {
   }
 
   /// Creates the database schema.
-  static Future<void> _onCreate(
-    Database db,
-    int version,
-  ) async {
+  static Future<void> _onCreate(Database db, int version) async {
+    // -------------------------------------------------------------------------
+    // Children
+    // -------------------------------------------------------------------------
+
+    await db.execute('''
+      CREATE TABLE children (
+        id TEXT PRIMARY KEY,
+        first_name TEXT NOT NULL,
+        birth_date TEXT NOT NULL,
+        notes TEXT,
+
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+
+    // Useful for sorting/searching children by first name.
+    await db.execute('''
+      CREATE INDEX idx_children_first_name
+      ON children(first_name)
+    ''');
+
+    // -------------------------------------------------------------------------
+    // Bottles
+    // -------------------------------------------------------------------------
+
     await db.execute('''
       CREATE TABLE bottles (
         id TEXT PRIMARY KEY,
@@ -80,15 +103,33 @@ class DatabaseHelper {
     int oldVersion,
     int newVersion,
   ) async {
-    // Future migrations go here.
+    // -------------------------------------------------------------------------
+    // Version 2
+    // -------------------------------------------------------------------------
+    // Adds support for multiple children.
     //
-    // Example:
-    //
-    // if (oldVersion < 2) {
-    //   await db.execute(
-    //     'ALTER TABLE bottles ADD COLUMN example TEXT',
-    //   );
-    // }
+    // Existing bottle data is preserved.
+    // The existing bottles.child_id column is kept nullable so that old
+    // bottles can remain valid even if they are not associated with a child.
+
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE children (
+          id TEXT PRIMARY KEY,
+          first_name TEXT NOT NULL,
+          birth_date TEXT NOT NULL,
+          notes TEXT,
+
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      ''');
+
+      await db.execute('''
+        CREATE INDEX idx_children_first_name
+        ON children(first_name)
+      ''');
+    }
   }
 
   /// Closes the database.
